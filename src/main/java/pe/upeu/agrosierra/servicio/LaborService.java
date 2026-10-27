@@ -10,6 +10,8 @@ import pe.upeu.agrosierra.dominio.Lote;
 import pe.upeu.agrosierra.dominio.TipoLabor;
 import pe.upeu.agrosierra.repositorio.LaborRepository;
 import pe.upeu.agrosierra.repositorio.LoteRepository;
+import pe.upeu.agrosierra.repositorio.UsuarioRepository;
+import pe.upeu.agrosierra.seguridad.Usuario;
 import pe.upeu.agrosierra.web.dto.LaborDto;
 import pe.upeu.agrosierra.web.dto.LaborRequest;
 
@@ -23,6 +25,7 @@ import java.util.Map;
 public class LaborService {
     private final LaborRepository laborRepository;
     private final LoteRepository loteRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional
     public LaborDto crear(LaborRequest request, String username) {
@@ -31,7 +34,7 @@ public class LaborService {
 
         // RN-01
         if (Boolean.TRUE.equals(lote.getCampaniaCerrada())) {
-            throw new ManejadorDeErrores.ReglaNegocioException("No se puede registrar labores sobre un lote con campaña cerrada", HttpStatus.CONFLICT);
+            throw new ManejadorDeErrores.ReglaNegocioException("No se puede registrar labores sobre un lote con campania cerrada", HttpStatus.CONFLICT);
         }
 
         TipoLabor tipoLabor = TipoLabor.valueOf(request.getTipo());
@@ -43,7 +46,7 @@ public class LaborService {
             double maxPermitido = dosisMax * hectareas;
             if (request.getCantidad() != null && request.getCantidad() > maxPermitido) {
                 Map<String, String> errors = new HashMap<>();
-                errors.put("cantidad", "La cantidad aplicada supera la dosis máxima permitida");
+                errors.put("cantidad", "La cantidad aplicada supera la dosis maxima permitida");
                 throw new ManejadorDeErrores.ReglaNegocioException("Datos invalidos", HttpStatus.BAD_REQUEST, errors);
             }
         }
@@ -68,27 +71,23 @@ public class LaborService {
 
         // RN-01
         if (Boolean.TRUE.equals(lote.getCampaniaCerrada())) {
-            throw new ManejadorDeErrores.ReglaNegocioException("No se puede corregir labores sobre un lote con campaña cerrada", HttpStatus.CONFLICT);
+            throw new ManejadorDeErrores.ReglaNegocioException("No se puede corregir labores sobre un lote con campania cerrada", HttpStatus.CONFLICT);
         }
 
-        // RN-02 - técnico solo puede corregir sus propias labores y dentro de 24 horas
-        // Verificamos por responsable si es técnico; el control por privilegio se hace en seguridad
+        // RN-02: tecnico solo corrige sus propias labores y dentro de 24 horas.
+        // Jefe de campo puede corregir cualquier labor.
         if (labor.getResponsable() != null && username != null && !labor.getResponsable().equals(username)) {
-            // Si es distinto usuario, podría ser técnico intentando editar ajena - pero JEFE_CAMPO tiene LABOR_EDITAR para todas
-            // La autorización por privilegio ya la maneja @PreAuthorize, pero RN-02 dice "Un técnico solo puede corregir..."
-            // Asumimos que si llega aquí con privilegio LABOR_EDITAR global (JEFE_CAMPO) puede hacerlo; si solo es técnico (propias) ya filtrado
-            // Para cumplir estrictamente: si responsable != username y no es jefe/admin con editar todas, bloquear
-        }
-        // RN-02 más estricto: dentro de 24 horas
-        if (labor.getFecha() != null) {
-            long horas = ChronoUnit.HOURS.between(labor.getFecha().atStartOfDay(), LocalDate.now().atStartOfDay());
-            if (horas > 24 && labor.getResponsable() != null && username != null && labor.getResponsable().equals(username)) {
+            Usuario u = usuarioRepository.findByUsername(username).orElse(null);
+            boolean esJefe = u != null && u.getRoles().stream()
+                    .anyMatch(r -> r.getNombre().name().equals("JEFE_CAMPO"));
+            if (!esJefe) {
                 throw new ManejadorDeErrores.ReglaNegocioException("No autorizado", HttpStatus.FORBIDDEN);
             }
-            if (labor.getResponsable() != null && username != null && !labor.getResponsable().equals(username)) {
-                // Si es otra persona, verificar - técnico no puede; pero jefe puede (tiene privilegio todas). 
-                // Como la regla dice "Un técnico solo puede corregir las labores que él mismo registró...", 
-                // y el jefe puede corregir todas según matriz
+        }
+        if (labor.getFecha() != null && labor.getResponsable() != null && username != null
+                && labor.getResponsable().equals(username)) {
+            long horas = ChronoUnit.HOURS.between(labor.getFecha().atStartOfDay(), LocalDate.now().atStartOfDay());
+            if (horas > 24) {
                 throw new ManejadorDeErrores.ReglaNegocioException("No autorizado", HttpStatus.FORBIDDEN);
             }
         }
@@ -102,7 +101,7 @@ public class LaborService {
             double maxPermitido = dosisMax * hectareas;
             if (request.getCantidad() != null && request.getCantidad() > maxPermitido) {
                 Map<String, String> errors = new HashMap<>();
-                errors.put("cantidad", "La cantidad aplicada supera la dosis máxima permitida");
+                errors.put("cantidad", "La cantidad aplicada supera la dosis maxima permitida");
                 throw new ManejadorDeErrores.ReglaNegocioException("Datos invalidos", HttpStatus.BAD_REQUEST, errors);
             }
         }
@@ -129,7 +128,7 @@ public class LaborService {
         // RN-03
         long countCosecha = laborRepository.countByLoteIdAndTipo(loteId, TipoLabor.COSECHA);
         if (countCosecha == 0) {
-            throw new ManejadorDeErrores.ReglaNegocioException("No se puede cerrar la campaña sin al menos una labor de tipo Cosecha", HttpStatus.CONFLICT);
+            throw new ManejadorDeErrores.ReglaNegocioException("No se puede cerrar la campania sin al menos una labor de tipo Cosecha", HttpStatus.CONFLICT);
         }
         lote.setCampaniaCerrada(true);
         loteRepository.save(lote);
