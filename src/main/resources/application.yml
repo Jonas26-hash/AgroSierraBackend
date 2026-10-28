@@ -21,5 +21,7 @@ spring:
       path: /h2-console
 
 jwt:
-  secret: AgroSierraSecretKeyParaElExamenParcialUnidad2MuyLargoYSeguro123456
+  # En produccion defina JWT_SECRET (minimo 32 caracteres). Si queda vacio,
+  # JwtService genera una clave efimera solo para desarrollo local.
+  secret: ${JWT_SECRET:}
   expiration: 3600000

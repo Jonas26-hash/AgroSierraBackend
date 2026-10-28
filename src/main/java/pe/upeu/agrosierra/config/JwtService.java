@@ -3,11 +3,15 @@ package pe.upeu.agrosierra.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,11 +20,30 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-    @Value("${jwt.secret}")
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
+
+    @Value("${jwt.secret:}")
     private String secretKey;
 
     @Value("${jwt.expiration}")
     private long jwtExpiration;
+
+    private SecretKey signingKey;
+
+    @PostConstruct
+    void inicializarClave() {
+        if (secretKey == null || secretKey.isBlank()) {
+            signingKey = Jwts.SIG.HS256.key().build();
+            log.warn("JWT_SECRET no esta definido: se genero una clave efimera para desarrollo. "
+                    + "Los tokens dejaran de ser validos al reiniciar el servicio.");
+            return;
+        }
+        byte[] bytes = secretKey.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length < 32) {
+            throw new IllegalStateException("JWT_SECRET debe tener al menos 32 caracteres (256 bits) para HS256");
+        }
+        signingKey = Keys.hmacShaKeyFor(bytes);
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -69,7 +92,7 @@ public class JwtService {
     }
 
     private SecretKey getSignInKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+        return signingKey;
     }
 
     @SuppressWarnings("unchecked")

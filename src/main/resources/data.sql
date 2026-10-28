@@ -8,6 +8,7 @@ INSERT INTO roles (nombre) VALUES ('ADMINISTRADOR');
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LOTE_LEER' FROM roles r WHERE r.nombre = 'TECNICO';
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LABOR_LEER' FROM roles r WHERE r.nombre = 'TECNICO';
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LABOR_CREAR' FROM roles r WHERE r.nombre = 'TECNICO';
+INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LABOR_EDITAR' FROM roles r WHERE r.nombre = 'TECNICO';
 
 -- JEFE_CAMPO
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LOTE_LEER' FROM roles r WHERE r.nombre = 'JEFE_CAMPO';
@@ -22,7 +23,8 @@ INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LOTE_LEER' FROM r
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'LABOR_LEER' FROM roles r WHERE r.nombre = 'ADMINISTRADOR';
 INSERT INTO rol_privilegios (rol_id, privilegio) SELECT r.id, 'USUARIO_GESTIONAR' FROM roles r WHERE r.nombre = 'ADMINISTRADOR';
 
--- Usuarios de prueba (contraseña BCrypt de Agro2026*)
+-- Usuarios de prueba (la contrasena se guarda cifrada con BCrypt;
+-- las credenciales de demostracion se entregan en el anexo privado de la evaluacion)
 INSERT INTO usuarios (username, password, nombre_completo, enabled) VALUES ('tecnico1', '$2a$10$tSwRxWEpG43KxQQlqrUv7OXxN5yHTNLtrikrKwYpx5T9V0LMsojY6', 'Técnico de Campo 1', true);
 INSERT INTO usuarios (username, password, nombre_completo, enabled) VALUES ('jefe1', '$2a$10$tSwRxWEpG43KxQQlqrUv7OXxN5yHTNLtrikrKwYpx5T9V0LMsojY6', 'Jefe de Campo', true);
 INSERT INTO usuarios (username, password, nombre_completo, enabled) VALUES ('admin', '$2a$10$tSwRxWEpG43KxQQlqrUv7OXxN5yHTNLtrikrKwYpx5T9V0LMsojY6', 'Administrador', true);
