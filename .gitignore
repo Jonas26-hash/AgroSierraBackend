@@ -3,3 +3,11 @@ target/
 .idea/
 *.class
 .DS_Store
+
+# Configuración privada y artefactos locales
+.env
+*.log
+*.db
+*.mv.db
+*.trace.db
+*.db-journal
