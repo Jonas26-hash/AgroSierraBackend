@@ -265,6 +265,12 @@ Resultado en la validación local: **8 pruebas, 0 fallos**.
 
 Las pruebas usan `MockMvc` sobre el contexto completo de Spring Boot y la base H2 en memoria.
 
+## Aplicación móvil relacionada
+
+Este backend proporciona la API REST utilizada por la aplicación AgroSierra.
+
+- Aplicación móvil: https://github.com/Jonas26-hash/AgroSierra
+
 ## Limitaciones conocidas
 
 - H2 en memoria con `create-drop`: la información se pierde al reiniciar y no hay migraciones ni perfil de base de datos persistente.
